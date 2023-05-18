@@ -10,7 +10,7 @@ import lombok.ToString;
 import java.time.Instant;
 
 @Entity
-@Table(name = "TB_BATCH")
+@Table(name = "TB_STOCK")
 @NoArgsConstructor
 @Data
 @ToString

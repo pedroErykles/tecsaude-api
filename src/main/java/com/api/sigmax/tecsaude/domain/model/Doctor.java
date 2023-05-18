@@ -4,9 +4,7 @@ import com.api.sigmax.tecsaude.domain.enums.Gender;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.br.CPF;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 import java.util.List;
@@ -36,5 +34,7 @@ public class Doctor {
     private Gender gender;
     @ElementCollection
     private List<LocalDate> dayOffList;
+    @OneToMany(cascade = CascadeType.ALL)
+    private List<Appointment> appointments;
 
 }

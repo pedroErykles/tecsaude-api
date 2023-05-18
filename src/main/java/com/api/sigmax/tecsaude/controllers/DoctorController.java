@@ -38,9 +38,9 @@ public class DoctorController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<DoctorProfileDto>> pageAll(Pageable pageable){
+    public ResponseEntity<List<Doctor>> findAll(){
         return ResponseEntity.status(HttpStatus.OK).body(
-                doctorService.pageAll(pageable).map(mapper)
+                doctorService.findAll()
         );
     }
 

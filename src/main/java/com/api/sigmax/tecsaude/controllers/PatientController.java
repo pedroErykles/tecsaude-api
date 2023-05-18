@@ -58,7 +58,6 @@ public class PatientController {
         return ResponseEntity.status(HttpStatus.OK).body(mapper.apply(patientService.update(patient)));
     }
 
-
     @DeleteMapping("/{id}")
     public ResponseEntity<?> delete(@PathVariable UUID id){
         if(!patientService.existsById(id)){

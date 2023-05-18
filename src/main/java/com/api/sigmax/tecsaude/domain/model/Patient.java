@@ -8,6 +8,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -32,6 +33,8 @@ public class Patient {
     private String phoneNumber;
     private String fatherName;
     private String motherName;
+    @OneToMany(cascade = CascadeType.ALL)
+    private List<Appointment> appointments;
 
     public Patient(PatientRegisterDto dto){
         this.name = dto.name();
