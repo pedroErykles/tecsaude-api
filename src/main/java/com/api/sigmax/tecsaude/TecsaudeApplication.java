@@ -13,9 +13,6 @@ public class TecsaudeApplication implements CommandLineRunner {
 		SpringApplication.run(TecsaudeApplication.class, args);
 	}
 
-	@Autowired
-	private JavaMailSender mailSender;
-
 	@Override
 	public void run(String... args) throws Exception {
 	}
