@@ -43,6 +43,14 @@ public class AppointmentService {
         return appointmentRepository.findByDate(date);
     }
 
+    public ArrayList<Appointment> findByPatientCpf(String cpf){
+        return appointmentRepository.findByPatientCpf(cpf);
+    }
+
+    public ArrayList<Appointment> findByDoctorCpf(String cpf){
+        return appointmentRepository.findByDoctorCpf(cpf);
+    }
+
     public Optional<Appointment> findById(UUID id){
         return appointmentRepository.findById(id);
     }

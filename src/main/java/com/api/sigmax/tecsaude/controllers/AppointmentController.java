@@ -5,9 +5,14 @@ import com.api.sigmax.tecsaude.domain.dtos.CreateAppointmentDto;
 import com.api.sigmax.tecsaude.domain.enums.AppointmentStatus;
 import com.api.sigmax.tecsaude.domain.mappers.AppointmentMapper;
 import com.api.sigmax.tecsaude.domain.model.Appointment;
+import com.api.sigmax.tecsaude.responses.ErrorResponse;
 import com.api.sigmax.tecsaude.services.AppointmentService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,8 +28,6 @@ import java.util.UUID;
 @RequestMapping("/api/v2/appointment")
 public class AppointmentController {
 
-    private Logger log = LoggerFactory.getLogger(AppointmentController.class);
-
     private final AppointmentService appointmentService;
     private final AppointmentMapper mapper;
 
@@ -35,45 +38,154 @@ public class AppointmentController {
     }
 
     @GetMapping
-    public ResponseEntity<List<AppointmentDto>> findAppointments(){
+    @Operation(summary = "FindAllAppoinments Route")
+    @ApiResponses(
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Listed all appointments",
+                    content = {
+                            @Content(array = @ArraySchema(schema = @Schema(implementation = AppointmentDto.class)))
+                    }
+            )
+    )
+    public ResponseEntity<?> findAppointments(){
         return ResponseEntity.status(HttpStatus.OK).body(appointmentService.findAll().stream().map(mapper).toList());
     }
 
     @GetMapping("/status")
+    @Operation(summary = "FindAllAppoinments Route")
+    @ApiResponses(
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Listed all appointments by status",
+                    content = {
+                            @Content(array = @ArraySchema(schema = @Schema(implementation = AppointmentDto.class)))
+                    }
+            )
+    )
     public ResponseEntity<List<AppointmentDto>> findByStatus(@RequestParam("type")AppointmentStatus appointmentStatus){
         return ResponseEntity.status(HttpStatus.OK)
                 .body(appointmentService.findByStatus(appointmentStatus).stream().map(mapper).toList());
     }
 
-    @GetMapping("patient/{id}")
-    public ResponseEntity<List<AppointmentDto>> findByPatientId(@PathVariable("id") UUID id){
-        return ResponseEntity.status(HttpStatus.OK).body(appointmentService.findByPatientId(id)
+    @GetMapping("patient/byCpf")
+    @Operation(summary = "Rota que retorna consultas pelo cpf do paciente")
+    @ApiResponses(
+       value = {
+               @ApiResponse(
+                       responseCode = "200",
+                       description = "Consulta retornada com sucesso",
+                       content = {
+                               @Content(array = @ArraySchema(
+                                       schema = @Schema(implementation = AppointmentDto.class)
+                               ))
+                       }
+               )
+       }
+    )
+    public ResponseEntity<?> findByPatientCpf(@RequestBody String cpf){
+        return ResponseEntity.status(HttpStatus.OK).body(appointmentService.findByPatientCpf(cpf)
                 .stream().map(mapper).toList());
     }
 
-    @GetMapping("doctor/{id}")
-    public ResponseEntity<List<AppointmentDto>> findByDoctorId(@PathVariable("id") UUID id){
-        return ResponseEntity.status(HttpStatus.OK).body(appointmentService.findByDoctorId(id)
+    @GetMapping("doctor/byCpf")
+    @Operation(summary = "Rota que retorna consultas pelo cpf do médico")
+    @ApiResponses(
+            value = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Consulta retornada com sucesso",
+                            content = {
+                                    @Content(array = @ArraySchema(
+                                            schema = @Schema(
+                                                    implementation = AppointmentDto.class
+                                            )
+                                    ))
+                            }
+                    )
+            }
+
+    )
+    public ResponseEntity<?> findByDoctorCpf(@RequestBody String cpf){
+        return ResponseEntity.status(HttpStatus.OK).body(appointmentService.findByDoctorCpf(cpf)
                 .stream().map(mapper).toList());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Appointment> findById(@PathVariable UUID id){
+    @Operation(summary = "Rota responsável por encontrar a consulta por seu ID")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Consulta retornada com sucesso",
+                    content = {
+                            @Content(schema = @Schema(implementation = Appointment.class))
+                    }
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Recurso não encontrado",
+                    content = {
+                            @Content(schema = @Schema(implementation = ErrorResponse.class))
+                    }
+            )
+            })
+    public ResponseEntity<?> findById(@PathVariable UUID id){
         var appointment =  appointmentService.findById(id);
 
-        return appointment.map(value -> ResponseEntity.status(HttpStatus.OK)
-                .body(value)).orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).build());
+        if(appointment.isEmpty()){
+            var message = new ErrorResponse(
+                    "Consulta não existe",
+                    HttpStatus.NOT_FOUND.value()
+            );
+            return new ResponseEntity<ErrorResponse>(message, HttpStatus.NOT_FOUND);
+        }
+
+        return new ResponseEntity<Appointment>(appointment.get(), HttpStatus.OK);
     }
 
     @GetMapping("date")
-    public ResponseEntity<List<AppointmentDto>> findByDate(@RequestParam("d")String date){
+    @Operation(summary = "Rota que retorna consultas pelas datas")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Lista retornada com sucesso",
+                    content = {
+                            @Content(array = @ArraySchema(schema = @Schema(implementation = Appointment.class)))
+                    }
+            )
+    })
+    public ResponseEntity<?> findByDate(@RequestParam("d")String date){
         return ResponseEntity.status(HttpStatus.OK).body(appointmentService.findByDate(
            LocalDate.parse(date, DateTimeFormatter.ofPattern("dd-MM-yyyy")))
                 .stream().map(mapper).toList());
     }
 
     @PostMapping
-    public ResponseEntity<Appointment> save(@RequestBody CreateAppointmentDto dto){
+    @Operation(summary = "Rota que marca uma consulta")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Consulta marcada com sucesso",
+                    content = {
+                            @Content(schema = @Schema(implementation = Appointment.class))
+                    }
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Data da consulta inválida ou dados da consulta inválidos",
+                    content = {
+                            @Content(schema = @Schema(implementation = ErrorResponse.class))
+                    }
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "Conflito com outra consulta",
+                    content = {
+                            @Content(schema = @Schema(implementation = ErrorResponse.class))
+                    }
+            )
+    })
+    public ResponseEntity<?> save(@RequestBody CreateAppointmentDto dto){
         var appointment = new Appointment(dto);
         var date = appointment.getDate();
 
@@ -84,39 +196,97 @@ public class AppointmentController {
         boolean verifySchedule = appointmentService.verifyScheduledTime(dto.doctor().getAvailableDays(),
                 appointment.getStart(), appointment.getDate());
 
-        log.info("oneDayInterval {}", oneDayInterval);
-        log.info("verifySchedule {}", verifySchedule);
-
         if(!oneDayInterval || !verifySchedule){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            var message  = new ErrorResponse(
+                    "Data inválida, verifique se os dados estão corretos e o há o intervalo de um dia",
+                    HttpStatus.BAD_REQUEST.value()
+            );
+            return new ResponseEntity<ErrorResponse>(message, HttpStatus.BAD_REQUEST);
         }
 
         if(appointmentService.isThereByDateTime(appointment.getDate(), appointment.getStart()) ||
                 appointmentService.sameDayAppointment(dto.patient().getId(), date)){
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+            var message  = new ErrorResponse(
+                    "Horário já agendado",
+                    HttpStatus.CONFLICT.value()
+            );
+            return new ResponseEntity<ErrorResponse>(message, HttpStatus.CONFLICT);
         }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(appointmentService.save(appointment));
     }
 
     @PutMapping
-    public ResponseEntity<Appointment> update(@RequestBody Appointment appointment) {
+    @Operation(summary = "Rota para atualização de consultas")
+    @ApiResponses(
+            value = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Consulta atualizada com sucesso",
+                            content = {
+                                    @Content(
+                                            schema = @Schema(implementation = Appointment.class)
+                                    )
+                            }
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Recurso não encontrado",
+                            content = {
+                                    @Content(
+                                            schema = @Schema(implementation = ErrorResponse.class)
+                                    )
+                            }
+                    )
+            }
+    )
+    public ResponseEntity<?> update(@RequestBody Appointment appointment) {
         if (!appointmentService.existsById(appointment.getId())) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            var message = new ErrorResponse(
+                    "Consulta não existe",
+                    HttpStatus.NOT_FOUND.value()
+            );
+            return new ResponseEntity<ErrorResponse>(message, HttpStatus.NOT_FOUND);
         }
 
         appointment.setEndOfAppointment(LocalTime.parse(DateTimeFormatter.ofPattern("hh:mm:ss").format(LocalTime.now())));
-        appointment.setStatus(AppointmentStatus.DONE);
 
         return ResponseEntity.status(HttpStatus.OK).body(appointmentService.update(appointment));
     }
 
     @PutMapping("/cancel/{id}")
-    public ResponseEntity<AppointmentDto> cancel(@PathVariable("id") UUID id){
+    @Operation(summary = "Rota para cancelamento de consultas")
+    @ApiResponses(
+            value = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Consulta cancelada com sucesso",
+                            content = {
+                                    @Content(
+                                            schema = @Schema(implementation = Appointment.class)
+                                    )
+                            }
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Recurso não encontrado",
+                            content = {
+                                    @Content(
+                                            schema = @Schema(implementation = ErrorResponse.class)
+                                    )
+                            }
+                    )
+            }
+    )
+    public ResponseEntity<?> cancel(@PathVariable("id") UUID id){
         var optional = appointmentService.findById(id);
 
         if(optional.isEmpty()){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            var message = new ErrorResponse(
+                    "Consulta não existe",
+                    HttpStatus.NOT_FOUND.value()
+            );
+            return new ResponseEntity<ErrorResponse>(message, HttpStatus.NOT_FOUND);
         }
 
         Appointment appointment = optional.get();
@@ -126,12 +296,39 @@ public class AppointmentController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Rota para deletar consultas")
+    @ApiResponses(
+            value = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Consulta deletada com sucesso",
+                            content = {
+                                    @Content(
+                                            schema = @Schema(implementation = String.class)
+                                    )
+                            }
+                    ),
+                    @ApiResponse(
+                            responseCode = "404",
+                            description = "Recurso não encontrado",
+                            content = {
+                                    @Content(
+                                            schema = @Schema(implementation = ErrorResponse.class)
+                                    )
+                            }
+                    )
+            }
+    )
     public ResponseEntity<?> delete(@PathVariable UUID id){
         if(!appointmentService.existsById(id)){
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            var message = new ErrorResponse(
+                    "Consulta não existe",
+                    HttpStatus.NOT_FOUND.value()
+            );
+            return new ResponseEntity<ErrorResponse>(message, HttpStatus.NOT_FOUND);
         } else{
             appointmentService.delete(id);
-            return ResponseEntity.status(HttpStatus.OK).build();
+            return new ResponseEntity<String>("Consulta deletada com sucesso / uid: " + id, HttpStatus.OK);
         }
     }
 }

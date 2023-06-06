@@ -21,6 +21,12 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
     ArrayList<Appointment> findByStatus(AppointmentStatus appointmentStatus);
     ArrayList<Appointment> findByDate(LocalDate date);
 
+    @Query(value = "SELECT COUNT(a) FROM Appointment a JOIN a.patient p WHERE p.cpf=patientCpf")
+    ArrayList<Appointment> findByPatientCpf(@Param("patientCpf") String cpf);
+
+    @Query(value = "SELECT COUNT(a) FROM Appointment a JOIN a.doctor d WHERE d.cpf=doctorCpf")
+    ArrayList<Appointment> findByDoctorCpf(@Param("doctorCpf") String cpf);
+
     @Query(value = "SELECT COUNT(a) FROM Appointment a WHERE a.date=:date and a.start=:startTime and a.status !=CANCELED")
     int countByDateTime(@Param("date") LocalDate date, @Param("startTime")LocalTime time);
 

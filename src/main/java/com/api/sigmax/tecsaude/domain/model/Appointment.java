@@ -20,9 +20,9 @@ public class Appointment {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
-    @OneToOne
+    @ManyToOne
     private Patient patient;
-    @OneToOne
+    @ManyToOne
     private Doctor doctor;
     @Column(columnDefinition = "text")
     private String description;
