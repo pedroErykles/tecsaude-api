@@ -1,3 +1,2 @@
-# Clinical Management API
-## Java with Spring 
-### Status: in development...
+# Medic Clinic Management API
+## Java with Spring Framework
